@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id            BigInt     @id @default(autoincrement())
+  email         String     @db.VarChar(100)
+  name          String     @db.VarChar(20)
+  password      String     @db.VarChar(100)
+  nickname      String?    @db.VarChar(20)
+  grade         String?    @db.VarChar(10)
+  profile_image String?    @db.VarChar(100)
+  token         String?    @db.VarChar(100)
+  is_active     Boolean
+  is_delete     Boolean
+  created_date  DateTime   @db.DateTime(6)
+  modified_date DateTime   @db.DateTime(6)
+  contents      Content[]
+
+  @@map("accounts")
+}
+
+model ContentCategory {
+  id                     BigInt             @id @default(autoincrement())
+  name                   String             @db.VarChar(100)
+  sort                   Int?
+  is_active              Boolean
+  is_delete              Boolean
+  created_date           DateTime           @db.DateTime(6)
+  modified_date          DateTime           @db.DateTime(6)
+  parent_id              BigInt?
+  type                   String             @db.VarChar(10)
+  content_category       ContentCategory?  @relation("content_categoryTocontent_category", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "content_category_parent_id_cba9537d_fk_content_category_id")
+  other_content_category ContentCategory[] @relation("content_categoryTocontent_category")
+  contents               Content[]
+
+  @@index([parent_id], map: "content_category_parent_id_cba9537d_fk_content_category_id")
+  @@map("contents_category")
+}
+
+model Content {
+  id               BigInt            @id @default(autoincrement())
+  header           String?           @db.VarChar(50)
+  subject          String            @db.VarChar(100)
+  content          String?           @db.LongText
+  view_count       Int
+  like_count       Int
+  is_notice        Boolean
+  is_active        Boolean
+  is_delete        Boolean
+  is_comment       Boolean
+  created_date     DateTime          @db.DateTime(6)
+  modified_date    DateTime          @db.DateTime(6)
+  account_id       BigInt
+  category_id      BigInt
+  accounts         Account          @relation(fields: [account_id], references: [id], onUpdate: Restrict, map: "contents_account_id_1b8318e6_fk_accounts_id")
+  content_category ContentCategory  @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "contents_category_id_516cdeee_fk_content_category_id")
+  contents_attach  ContentAttach[]
+
+  @@index([account_id], map: "contents_account_id_1b8318e6_fk_accounts_id")
+  @@index([category_id], map: "contents_category_id_516cdeee")
+  @@map("contents")
+}
+
+model ContentAttach {
+  id            BigInt   @id @default(autoincrement())
+  attach_type   String   @db.VarChar(10)
+  attach_name   String   @db.VarChar(100)
+  extension     String?  @db.VarChar(10)
+  size          Int?
+  sort          Int?
+  created_date  DateTime @db.DateTime(6)
+  content_id    BigInt
+  modified_date DateTime @db.DateTime(6)
+  contents      Content @relation(fields: [content_id], references: [id], onUpdate: Restrict, map: "contents_attach_content_id_ed4aa18b_fk_contents_id")
+
+  @@index([content_id], map: "contents_attach_content_id_ed4aa18b_fk_contents_id")
+  @@map("contents_attach")
+}
